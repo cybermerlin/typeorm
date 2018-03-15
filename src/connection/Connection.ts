@@ -30,6 +30,7 @@ import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
 import {MysqlDriver} from "../driver/mysql/MysqlDriver";
 import {PromiseUtils} from "../util/PromiseUtils";
 import {SqljsEntityManager} from "../entity-manager/SqljsEntityManager";
+import {isArray} from "util";
 
 /**
  * Connection is a single database ORM connection to a specific database.
@@ -152,7 +153,8 @@ export class Connection {
      */
     async connect(): Promise<this> {
         if (this.isConnected) {
-            if (this.options.logging)
+            if (this.options.logging === true
+                    || (isArray(this.options.logging) && this.options.logging.indexOf("info") > -1))
                 console.info("Someone try connect without close exist", this.options.type, this.options.name);
             // throw new AlreadyHasActiveConnectionError(this.name);
             return this;
@@ -202,7 +204,8 @@ export class Connection {
      * Once connection is closed, you cannot use repositories or perform any operations except opening connection again.
      */
     async close(): Promise<void> {
-        if (this.options.logging)
+        if (this.options.logging === true
+            || (isArray(this.options.logging) && this.options.logging.indexOf("info") > -1))
             console.info(this.name, " connection closing.");
 
         if (!this.isConnected)
