@@ -153,7 +153,7 @@ export class Connection {
      */
     async connect(): Promise<this> {
         if (this.isConnected) {
-            if (this.options.logging === true
+            if (this.options.logging === true || this.options.logging === "all"
                     || (isArray(this.options.logging) && this.options.logging.indexOf("info") > -1))
                 console.info("Someone try connect without close exist", this.options.type, this.options.name);
             // throw new AlreadyHasActiveConnectionError(this.name);
@@ -204,8 +204,8 @@ export class Connection {
      * Once connection is closed, you cannot use repositories or perform any operations except opening connection again.
      */
     async close(): Promise<void> {
-        if (this.options.logging === true
-            || (isArray(this.options.logging) && this.options.logging.indexOf("info") > -1))
+        if (this.options.logging === true || this.options.logging === "all"
+                || (isArray(this.options.logging) && this.options.logging.indexOf("info") > -1))
             console.info(this.name, " connection closing.");
 
         if (!this.isConnected)

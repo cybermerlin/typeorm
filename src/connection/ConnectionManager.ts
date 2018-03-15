@@ -1,6 +1,7 @@
 import {Connection} from "./Connection";
 import {ConnectionNotFoundError} from "../error/ConnectionNotFoundError";
 import {ConnectionOptions} from "./ConnectionOptions";
+import {isArray} from "util";
 
 /**
  * ConnectionManager is used to store and manage multiple orm connections.
@@ -53,7 +54,8 @@ export class ConnectionManager {
             // if the connection is registered and it's not closed
             // then just return found the connection for to be continued.
             if (existConnection.isConnected) {
-                if (options.logging)
+                if (options.logging === true || options.logging === "all"
+                        || (isArray(options.logging) && options.logging.indexOf("info") > -1))
                     console.info("Someone requested a new connection without close previous -",
                         options.type, options.name);
                 return existConnection;
