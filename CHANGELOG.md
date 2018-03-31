@@ -156,6 +156,19 @@ feel free to ask us and community.
 * [ ] parallelizm & multithreading in code (for [].map|filter|reduce n other things)
 * [ ] use mocha-parallel for execution tests
 
+
+## 0.1.19
+
+* fixed bug in InsertQueryBuilder
+
+## 0.1.18
+
+* fixed timestamp issues
+
+## 0.1.17
+
+* fixed issue with entity order by applied to update query builder
+
 ## 0.1.16
 
 * security and bug fixes
