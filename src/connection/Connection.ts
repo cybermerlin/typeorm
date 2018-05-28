@@ -38,7 +38,6 @@ import {isArray} from "util";
  * You can have multiple connections to multiple databases in your application.
  */
 export class Connection {
-
     // -------------------------------------------------------------------------
     // Public Readonly Properties
     // -------------------------------------------------------------------------
@@ -208,8 +207,13 @@ export class Connection {
                 || (isArray(this.options.logging) && this.options.logging.indexOf("info") > -1))
             console.info(this.name, " connection closing.");
 
-        if (!this.isConnected)
-            throw new CannotExecuteNotConnectedError(this.name);
+        if (!this.isConnected) {
+            if (this.options.logging)
+                console.info("Someone try close connection but is not connected",
+                    this.options.type, this.options.name);
+            return;
+            // throw new CannotExecuteNotConnectedError(this.name);
+        }
 
         await this.driver.disconnect();
 

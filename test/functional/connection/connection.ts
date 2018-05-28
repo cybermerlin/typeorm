@@ -25,7 +25,7 @@ describe("Connection", () => {
     describe("before connection is established", function() {
 
         let connection: Connection;
-        before(async () => {
+        before(() => {
             connection = getConnectionManager().create(setupSingleTestingConnection("mysql", {
                 name: "default",
                 entities: []
