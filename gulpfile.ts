@@ -56,6 +56,34 @@ export class Gulpfile {
             .pipe(shell(["npm run compile"]));
     }
 
+    /**
+     * Runs typescript files compilation.
+     */
+    @Task("compile-watch")
+    compileWatch() {
+        return shell(["tsc -w"]);
+    }
+
+    @SequenceTask()
+    watcher() {
+        return gulp.parallel("compileWatch", "testWatch");
+    }
+
+    @Task("test-watch")
+    testWatch() {
+        chai.should();
+        chai.use(require("sinon-chai"));
+        chai.use(require("chai-as-promised"));
+
+        return gulp.src(["./build/compiled/test/**/*.js"])
+            .pipe(mocha({
+                bail: true,
+                grep: !!args.grep ? new RegExp(args.grep) : undefined,
+                timeout: 15000,
+                watch: true
+            }));
+    }
+
     // -------------------------------------------------------------------------
     // Build and packaging for browser
     // -------------------------------------------------------------------------
@@ -359,13 +387,15 @@ export class Gulpfile {
     //         });
     //     });
     // }
+
     @Task()
     runTests() {
         chai.should();
         chai.use(require("sinon-chai"));
         chai.use(require("chai-as-promised"));
 
-        return gulp.src(["./build/compiled/test/**/*.js"])
+        // return gulp.src(["./build/compiled/test/**/*.js"])
+        return gulp.src(["./build/compiled/test/other-issues/lateral-join/**/*.js"])
             .pipe(mocha({
                 bail: true,
                 grep: !!args.grep ? new RegExp(args.grep) : undefined,
