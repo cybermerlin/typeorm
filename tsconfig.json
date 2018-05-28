@@ -1,29 +1,33 @@
 {
-    "version": "2.6.1",
-    "compilerOptions": {
-        "lib": ["es5", "es6"],
-        "outDir": "build/compiled",
-        "target": "es5",
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": true,
-        "noImplicitAny": true,
-        "declaration": true,
-        "noFallthroughCasesInSwitch": true,
-        "noImplicitReturns": true,
-        "stripInternal": true,
-        "pretty": true,
-        "strictNullChecks": true,
-        "noUnusedLocals": true
-    },
-    "exclude": [
-        ".vscode",
-        ".idea",
-        "tmp",
-        "temp",
-        "build",
-        "node_modules"
-    ]
+		"version": "2.8.1",
+		"compilerOptions": {
+				"lib": [
+						"es5",
+						"es6"
+				],
+				"outDir": "build/compiled",
+				"target": "es5",
+				"module": "commonjs",
+				"moduleResolution": "node",
+				"emitDecoratorMetadata": true,
+				"experimentalDecorators": true,
+				"sourceMap": true,
+				"declaration": true,
+				"noFallthroughCasesInSwitch": true,
+				"suppressImplicitAnyIndexErrors": false,
+				"noImplicitAny": false,
+				"noImplicitReturns": false,
+				"stripInternal": true,
+				"pretty": true,
+				"strictNullChecks": false,
+				"noUnusedLocals": true
+		},
+		"exclude": [
+				".vscode",
+				".idea",
+				"tmp",
+				"temp",
+				"build",
+				"node_modules"
+		]
 }
