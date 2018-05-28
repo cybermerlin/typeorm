@@ -1,0 +1,31 @@
+[*]
+charset=utf-8
+end_of_line=lf
+insert_final_newline=true
+indent_style=space
+tab_width=2
+indent_brace_style = K&R
+curly_bracket_next_line = false
+spaces_around_operators = true
+max_line_length = 120
+
+[{*.sht,*.html,*.shtm,*.shtml,*.md,*.ng,*.htm,*.thtml}]
+indent_style=tab
+tab_width=4
+
+[{phpunit.xml.dist,*.jhm,*.rng,*.wsdl,*.fxml,*.pom,*.xslt,*.jrxml,*.ant,*.xul,*.xsl,*.xsd,*.tld,*.jnlp,*.xml}]
+indent_style=tab
+indent_size=4
+
+[{composer.lock,.eslintrc,jest.config,.babelrc,config,.stylelintrc,*.bowerrc,*.jsb3,*.jsb2,*.json,*.side}]
+indent_style=tab
+indent_size=4
+
+[*.css]
+indent_style=tab
+indent_size=4
+
+[{*.module,*.phtml,*.inc}]
+indent_style=tab
+tab_width=2
+
