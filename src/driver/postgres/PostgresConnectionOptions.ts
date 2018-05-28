@@ -17,6 +17,12 @@ export interface PostgresConnectionOptions extends BaseConnectionOptions, Postgr
     readonly schema?: string;
 
     /**
+     * if need native then will be auto used require('pg-native') and assigned as Driver
+     * @property {Boolean} [native=true]
+     */
+    native?: boolean;
+
+    /**
      * Replication setup.
      */
     readonly replication?: {

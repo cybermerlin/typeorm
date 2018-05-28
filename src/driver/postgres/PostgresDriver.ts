@@ -175,6 +175,7 @@ export class PostgresDriver implements Driver {
         this.connection = connection;
         this.options = connection.options as PostgresConnectionOptions;
         this.isReplicated = this.options.replication ? true : false;
+        this.options.native = this.options.native !== false; 
 
         // load postgres package
         this.loadDependencies();
@@ -609,12 +610,16 @@ export class PostgresDriver implements Driver {
     protected loadDependencies(): void {
         try {
             this.postgres = PlatformTools.load("pg");
-            try {
-                const pgNative = PlatformTools.load("pg-native");
-                if (pgNative && this.postgres.native) this.postgres = this.postgres.native;
+            if (!this.options.native) {
+                process.env.NODE_PG_FORCE_NATIVE === undefined;
+                delete process.env.NODE_PG_FORCE_NATIVE;
+            } else {
+                try {
+                    const pgNative = PlatformTools.load("pg-native");
+                    if (pgNative && this.postgres.native) this.postgres = this.postgres.native;
 
-            } catch (e) { }
-
+                } catch (e) { }
+            }
         } catch (e) { // todo: better error for browser env
             throw new DriverPackageNotInstalledError("Postgres", "pg");
         }
