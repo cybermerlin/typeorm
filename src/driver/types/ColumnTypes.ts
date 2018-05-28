@@ -2,6 +2,7 @@
  * Column types where precision and scale properties are used.
  */
 export type PrimaryGeneratedColumnType = "int" // mysql, mssql, oracle, sqlite
+    |"serial" // postgres
     |"int2" // postgres, sqlite
     |"int2" // postgres, sqlite
     |"int4" // postgres
@@ -154,7 +155,8 @@ export type ColumnType = WithPrecisionColumnType
     |BooleanConstructor
     |DateConstructor
     |NumberConstructor
-    |StringConstructor;
+    |StringConstructor
+    |PrimaryGeneratedColumnType;
 
 // "string"|"text"|"number"|"integer"|"int"|"smallint"|"bigint"|"float"|"double"|
 // "decimal"|"date"|"time"|"datetime"|"boolean"|"json"|"jsonb"|"simple_array"|"uuid";
