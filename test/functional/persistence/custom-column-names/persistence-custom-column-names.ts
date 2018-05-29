@@ -70,7 +70,7 @@ describe("persistence > custom-column-names", function() {
         // load a post
         before(function() {
             return postRepository
-                .findOneById(1, {join: {alias: "post", leftJoinAndSelect: {category: "post.category"}}})
+                .findOne(1, { join: { alias: "post", leftJoinAndSelect: { category: "post.category" } }})
                 .then(post => loadedPost = post!);
         });
 
@@ -105,7 +105,7 @@ describe("persistence > custom-column-names", function() {
         // load a post
         before(function() {
             return postRepository
-                .findOneById(1, {join: {alias: "post", leftJoinAndSelect: {category: "post.category"}}})
+                .findOne(1, { join: { alias: "post", leftJoinAndSelect: { category: "post.category" } } })
                 .then(post => loadedPost = post!);
         });
 
@@ -135,7 +135,7 @@ describe("persistence > custom-column-names", function() {
         // load a post
         before(function() {
             return postRepository
-                .findOneById(1, {join: {alias: "post", leftJoinAndSelect: {category: "post.category"}}})
+                .findOne(1, { join: { alias: "post", leftJoinAndSelect: { category: "post.category" } }})
                 .then(post => loadedPost = post!);
         });
 
@@ -183,12 +183,7 @@ describe("persistence > custom-column-names", function() {
         // load a post
         before(function() {
             return postRepository
-                .findOneById(1, {
-                    join: {
-                        alias: "post",
-                        leftJoinAndSelect: {category: "post.category", metadata: "category.metadata"}
-                    }
-                })
+                .findOne(1, { join: { alias: "post", leftJoinAndSelect: { category: "post.category", metadata: "category.metadata" } } })
                 .then(post => loadedPost = post!);
         });
 
@@ -233,12 +228,7 @@ describe("persistence > custom-column-names", function() {
         // load a post
         before(function() {
             return postRepository
-                .findOneById(1, {
-                    join: {
-                        alias: "post",
-                        leftJoinAndSelect: {category: "post.category", metadata: "category.metadata"}
-                    }
-                })
+                .findOne(1, { join: { alias: "post", leftJoinAndSelect: { category: "post.category", metadata: "category.metadata" } } })
                 .then(post => loadedPost = post!);
         });
 

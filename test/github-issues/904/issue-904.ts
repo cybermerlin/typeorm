@@ -14,7 +14,6 @@ describe("github issues > #904 Using closure tables without @TreeLevelColumn wil
     let connections: Connection[];
     before(async () => connections = await createTestingConnections({
         entities: [__dirname + "/entity/*{.js,.ts}"],
-        dropSchema: true,
     }));
     beforeEach(() => reloadTestingDatabases(connections));
     after(() => closeTestingConnections(connections));
@@ -39,9 +38,6 @@ describe("github issues > #904 Using closure tables without @TreeLevelColumn wil
 
         c11.parentCategory = c1;
         c12.parentCategory = c1;
-
-        // todo: this case is not working:
-        // c1.childCategories = [c11, c12];
 
         await categoryRepository.save(a1);
         await categoryRepository.save(b1);

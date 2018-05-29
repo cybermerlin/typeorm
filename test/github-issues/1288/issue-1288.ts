@@ -9,7 +9,7 @@ describe("github issues > #1288 check calculated columns (sql in @Column)", () =
     let connections: Connection[];
     before(async () => {
         return connections = await createTestingConnections({
-            enabledDrivers: ["mysql", "postgres", "mariadb", "mssql", "oracle", "websql"],
+            enabledDrivers: ["mysql", "postgres", "mariadb", "mssql", "oracle"],
             entities: [__dirname + "/entity/*{.js,.ts}"],
             driverSpecific: {
                 usePipesAsConcat: true
