@@ -61,10 +61,6 @@ describe("Connection", () => {
          ]);
          });*/
 
-        it("should not be able to close", () => {
-            return connection.close().should.be.rejected; // CannotCloseNotConnectedError
-        });
-
         it("should not be able to sync a schema", () => {
             return connection.synchronize().should.be.rejected; // CannotCloseNotConnectedError
         });
@@ -206,10 +202,6 @@ describe("Connection", () => {
         before(() => createTestingConnections({ entities: [Post], schemaCreate: true, dropSchema: true }).then(all => {
             connections = all;
             return Promise.all(connections.map(connection => connection.close()));
-        }));
-
-        it("should not be able to close already closed connection", () => connections.forEach(connection => {
-            return connection.close().should.be.rejected; // CannotCloseNotConnectedError
         }));
 
         it("connection.isConnected should be false", () => connections.forEach(connection => {

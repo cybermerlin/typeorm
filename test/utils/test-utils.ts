@@ -254,7 +254,7 @@ export async function createTestingConnections(options?: TestingOptions): Promis
         await queryRunner.release();
     }));
 
-    return Promise.resolve(connections);
+    return connections;
 }
 
 /**
