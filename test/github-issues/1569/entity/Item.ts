@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from "../../../../src/index";
 
 export class EmbeddedItem {
-    @Column({ type: "integer", array: true })
+    @Column({ type: "integer", isArray: true })
     arrayInsideEmbedded: number[];
 }
 

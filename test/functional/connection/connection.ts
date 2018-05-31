@@ -91,7 +91,6 @@ describe("Connection", () => {
                     password: "test",
                     database: "test",
                     entities: [],
-                    entitySchemas: [],
                     dropSchema: false,
                     schemaCreate: false,
                     enabledDrivers: ["mysql"],
@@ -103,7 +102,7 @@ describe("Connection", () => {
     describe("after connection is established successfully", function() {
 
         let connections: Connection[];
-        beforeEach(() => createTestingConnections({ entities: [Post, Category], schemaCreate: true, dropSchema: true }).then(all => connections = all));
+        beforeEach( async () => connections = await createTestingConnections({ entities: [Post, Category], schemaCreate: true, dropSchema: true }));
         afterEach(() => closeTestingConnections(connections));
 
         it("connection.isConnected should be true", () => connections.forEach(connection => {
@@ -174,10 +173,10 @@ describe("Connection", () => {
             const post = new Post();
             post.title = "new post";
             await postRepository.save(post);
-            const loadedPost = await postRepository.findOneById(post.id);
+            const loadedPost = await postRepository.findOne(post.id);
             expect(loadedPost).to.be.eql(post);
             await connection.synchronize(true);
-            const againLoadedPost = await postRepository.findOneById(post.id);
+            const againLoadedPost = await postRepository.findOne(post.id);
             expect(againLoadedPost).to.be.empty;
         })));
 
@@ -219,7 +218,7 @@ describe("Connection", () => {
 
     });
 
-    describe("skip schema generation when skipSync option is used", function() {
+    describe("skip schema generation when synchronize option is set to false", function() {
 
         let connections: Connection[];
         beforeEach(() => createTestingConnections({ entities: [View], dropSchema: true }).then(all => connections = all));

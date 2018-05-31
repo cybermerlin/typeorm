@@ -21,22 +21,22 @@
 </div>
 
 TypeORM is an [ORM](https://en.wikipedia.org/wiki/Object-relational_mapping) 
-that can run in NodeJS, Browser, Cordova, PhoneGap and Ionic platforms 
+that can run in NodeJS, Browser, Cordova, PhoneGap, Ionic, React Native and Electron platforms
 and can be used with TypeScript and JavaScript (ES5, ES6, ES7).
-Its goal to always support latest JavaScript features and provide features
-that help you to develop any kind of applications that use databases - from
+Its goal is to always support the latest JavaScript features and provide additional features
+that help you to develop any kind of application that uses databases - from
 small applications with a few tables to large scale enterprise applications
 with multiple databases.
 
 TypeORM supports both Active Record and Data Mapper patterns, 
-unlike all other JavaScript ORMs currently exist, 
+unlike all other JavaScript ORMs currently in existance, 
 which means you can write high quality, loosely coupled, scalable,
 maintainable applications the most productive way.
 
 TypeORM is highly influenced by other ORMs, such as [Hibernate](http://hibernate.org/orm/),
  [Doctrine](http://www.doctrine-project.org/) and [Entity Framework](https://www.asp.net/entity-framework).
 
-Some of TypeORM features:
+Some TypeORM features:
 
 * supports both DataMapper and ActiveRecord (your choice)
 * entities and columns
@@ -67,9 +67,9 @@ Some of TypeORM features:
 * supports closure table pattern
 * schema declaration in models or separate configuration files
 * connection configuration in json / xml / yml / env formats
-* supports MySQL / MariaDB / Postgres / SQLite / Microsoft SQL Server / Oracle / WebSQL / sql.js
+* supports MySQL / MariaDB / Postgres / SQLite / Microsoft SQL Server / Oracle / sql.js
 * supports MongoDB NoSQL database
-* works in NodeJS / Browser / Ionic / Cordova / Electron platforms
+* works in NodeJS / Browser / Ionic / Cordova / React Native / Electron platforms
 * TypeScript and JavaScript support
 * produced code is performant, flexible, clean and maintainable
 * follows all possible best practices
@@ -110,13 +110,13 @@ user.age = 25;
 await repository.save(user);
 
 const allUsers = await repository.find();
-const firstUser = await repository.findOneById(1);
+const firstUser = await repository.findOne(1); // find by id
 const timber = await repository.findOne({ firstName: "Timber", lastName: "Saw" });
 
 await repository.remove(timber);
 ```
 
-Alternatively, if you prefer to use `ActiveRecord` implementation, you can use it as well:
+Alternatively, if you prefer to use the `ActiveRecord` implementation, you can use it as well:
 
 ```typescript
 import {Entity, PrimaryGeneratedColumn, Column, BaseEntity} from "typeorm";
@@ -149,7 +149,7 @@ user.age = 25;
 await user.save();
 
 const allUsers = await User.find();
-const firstUser = await User.findOneById(1);
+const firstUser = await User.findOne(1);
 const timber = await User.findOne({ firstName: "Timber", lastName: "Saw" });
 
 await timber.remove();
@@ -158,7 +158,7 @@ await timber.remove();
 ## Installation
 
 
-1. Install npm package:
+1. Install the npm package:
 
     `npm install typeorm --save`
 
@@ -174,11 +174,11 @@ await timber.remove();
 
     `npm install @types/node --save`
 
-4. Install database driver:
+4. Install a database driver:
 
     * for **MySQL** or **MariaDB**
     
-        `npm install mysql --save`
+        `npm install mysql --save` (you can install `mysql2` instead as well)
     
     * for **PostgreSQL**
     
@@ -196,20 +196,22 @@ await timber.remove();
     
         `npm install sql.js --save`
     
-    * for **Oracle** (experimental)
+    * for **Oracle**
     
         `npm install oracledb --save`
     
-    Install only one of them, depending on what database you use.
+    Install only *one* of them, depending on which database you use.
     
     To make the Oracle driver work, you need to follow the installation instructions from 
     [their](https://github.com/oracle/node-oracledb) site.
-    Oracle support is experimental at the moment and isn't bug-free.
-    Expect to see more stable Oracle support in a near future.
+
+    * for **MongoDB** (experimental)
+
+        `npm install mongodb --save`
 
 ##### TypeScript configuration
 
-Also make sure you are using TypeScript compiler version **2.3** or greater, 
+Also, make sure you are using TypeScript compiler version **2.3** or greater, 
 and you have enabled the following settings in `tsconfig.json`:
 
 ```json
@@ -222,8 +224,8 @@ You may also need to enable `es6` in the `lib` section of compiler options, or i
 ## Quick Start
 
 The quickest way to get started with TypeORM is to use its CLI commands to generate a starter project.
-Quick start works only if you are using TypeORM in NodeJS application. 
-If you are using other platforms, proceed to [step-by-step guide](#step-by-step-guide).
+Quick start works only if you are using TypeORM in a NodeJS application. 
+If you are using other platforms, proceed to the [step-by-step guide](#step-by-step-guide).
 
 First, install TypeORM globally:
 
@@ -231,17 +233,16 @@ First, install TypeORM globally:
 npm install typeorm -g
 ```
 
-Then go to the directory where you want to create a new project and run:
+Then go to the directory where you want to create a new project and run the command:
 
 ```
 typeorm init --name MyProject --database mysql
 ```
 
 Where `name` is the name of your project and `database` is the database you'll use.
-It can be one of the following values: `mysql`, `mariadb`, `postgres`, `sqlite`, `mssql`, `oracle`,
-`websql`, `mongodb`.
+Database can be one of the following values: `mysql`, `mariadb`, `postgres`, `sqlite`, `mssql`, `oracle`, `mongodb`, `cordova`, `react-native`.
 
-This command will generate you a new project in `MyProject` directory with following files:
+This command will generate a new project in the `MyProject` directory with the following files:
 
 ```
 MyProject
@@ -257,16 +258,16 @@ MyProject
 └── tsconfig.json    // TypeScript compiler options
 ```
 
-> You can also run `typeorm init` on exist node project, but be careful - it may override some files you may already have.
+> You can also run `typeorm init` on an existing node project, but be careful - it may override some files you already have.
 
-Next step is to install new project dependencies:
+The next step is to install new project dependencies:
 
 ```
 cd MyProject
 npm install
 ```
 
-While installation in the progress edit `ormconfig.json` file and put your own database connection configuration options in there:
+While installation is in progress, edit the `ormconfig.json` file and put your own database connection configuration options in there:
 
 ```json
 {
@@ -290,36 +291,36 @@ While installation in the progress edit `ormconfig.json` file and put your own d
 }
 ```
 
-Particularly most of the time you'll only need to configure 
+Particularly, most of the time you'll only need to configure 
 `host`, `username`, `password`, `database` and maybe `port` options.
 
-Once you finish with configuration and all node modules are installed you can run your application:
+Once you finish with configuration and all node modules are installed, you can run your application:
 
 ```
 npm start
 ```
 
-That's it, your application should successfully run now and insert a new user into the database.
+That's it, your application should successfully run and insert a new user into the database.
 You can continue to work with this project and integrate other modules you need and start 
 creating more entities. 
 
-> You can generate even more advanced project with express installed by running
+> You can generate an even more advanced project with express installed by running
 `typeorm init --name MyProject --database mysql --express` command.
 
 ## Step-by-Step Guide
 
 What are you expecting from ORM?
 First of all, you are expecting it will create database tables for you
-and find / insert / update / delete your data without the pain of  
+and find / insert / update / delete your data without the pain of
 having to write lots of hardly maintainable SQL queries.
-This guide will show you how to setup TypeORM from scratch and make it do what you are expecting from ORM.
+This guide will show you how to setup TypeORM from scratch and make it do what you are expecting from an ORM.
 
 ### Create a model
 
-Working with database starts from creating tables. 
+Working with a database starts from creating tables. 
 How do you tell TypeORM to create a database table?
-Answer is - through the models. 
-Your models in your app - are your database tables.
+The answer is - through the models. 
+Your models in your app are your database tables.
 
 For example, you have a `Photo` model:
 
@@ -336,7 +337,7 @@ export class Photo {
 And you want to store photos in your database.
 To store things in the database, first you need a database table,
 and database tables are created from your models.
-Not all models, but only those you define as *entities*. 
+Not all models, but only those you define as *entities*.
         
 ### Create an entity
 
@@ -402,12 +403,12 @@ Column types in the database are inferred from the property types you used, e.g.
 But you can use any column type your database supports by implicitly specifying a column type into the `@Column` decorator.
 
 We generated a database table with columns, but there is one thing left.
-Each database table must have a column with a primary key. 
+Each database table must have a column with a primary key.
 
 ### Creating a primary column
 
 Each entity **must** have at least one primary key column.
-This is a requirement and you can't avoid it. 
+This is a requirement and you can't avoid it.
 To make a column a primary key, you need to use `@PrimaryColumn` decorator.
 
 ```typescript
@@ -534,8 +535,7 @@ createConnection({
 
 We are using MySQL in this example, but you can use any other supported database. 
 To use another database, simply change the `type` in the options to the database type you are using: 
-mysql, mariadb, postgres, sqlite, mssql, oracle,
-websql, cordova or mongodb.
+mysql, mariadb, postgres, sqlite, mssql, oracle, cordova, react-native or mongodb.
 Also make sure to use your own host, port, username, password and database settings.
 
 We added our Photo entity to the list of entities for this connection. 
@@ -598,6 +598,7 @@ Now let's create a new photo to save it in the database:
 
 ```typescript
 import {createConnection} from "typeorm";
+import {Photo} from "./entity/Photo";
 
 createConnection(/*...*/).then(connection => {
 
@@ -715,7 +716,7 @@ createConnection(/*...*/).then(async connection => {
     let allPhotos = await photoRepository.find();
     console.log("All photos from the db: ", allPhotos);
 
-    let firstPhoto = await photoRepository.findOneById(1);
+    let firstPhoto = await photoRepository.findOne(1);
     console.log("First photo from the db: ", firstPhoto);
 
     let meAndBearsPhoto = await photoRepository.findOne({ name: "Me and Bears" });
@@ -745,7 +746,7 @@ import {Photo} from "./entity/Photo";
 createConnection(/*...*/).then(async connection => {
 
     /*...*/
-    let photoToUpdate = await photoRepository.findOneById(1);
+    let photoToUpdate = await photoRepository.findOne(1);
     photoToUpdate.name = "Me, my friends and polar bears";
     await photoRepository.save(photoToUpdate);
 
@@ -765,7 +766,7 @@ import {Photo} from "./entity/Photo";
 createConnection(/*...*/).then(async connection => {
 
     /*...*/
-    let photoToRemove = await photoRepository.findOneById(1);
+    let photoToRemove = await photoRepository.findOne(1);
     await photoRepository.remove(photoToRemove);
 
 }).catch(error => console.log(error));
@@ -809,8 +810,8 @@ export class PhotoMetadata {
 }
 ```
      
-Here, we are using a new decorator called `@OneToOne`. It allows us to create a one-to-one relationship between two entities. 
-`type => Photo` is a function that returns the class of the entity with which we want to make our relationship. 
+Here, we are using a new decorator called `@OneToOne`. It allows us to create a one-to-one relationship between two entities.
+`type => Photo` is a function that returns the class of the entity with which we want to make our relationship.
 We are forced to use a function that returns a class, instead of using the class directly, because of the language specifics.
 We can also write it as `() => Photo`, but we use `type => Photo` as a convention to increase code readability.
 The type variable itself does not contain anything.
@@ -986,20 +987,13 @@ export class Photo {
     /// ... other columns
 
     @OneToOne(type => PhotoMetadata, metadata => metadata.photo, {
-        cascadeInsert: true,
-        cascadeUpdate: true,
-        cascadeRemove: true
+        cascade: true,
     })
     metadata: PhotoMetadata;
 }
 ```
 
-* **cascadeInsert** - automatically insert metadata in the relation if it does not exist in its table. 
-    This means that we don't need to manually insert a newly created `photoMetadata` object.
-* **cascadeUpdate** - automatically update metadata in the relation if something is changed in this object.
-* **cascadeRemove** - automatically remove metadata from its table if you removed metadata from photo object.
-
-Using `cascadeInsert` allows us to not have to separately save photo and metadata objects now. 
+Using `cascade` allows us not to separately save photo and separately save metadata objects now.
 Now we can simply save a photo object, and the metadata object will be saved automatically because of cascade options.
 
 ```typescript
@@ -1009,7 +1003,7 @@ createConnection(options).then(async connection => {
     let photo = new Photo();
     photo.name = "Me and Bears";
     photo.description = "I am near polar bears";
-    photo.filename = "photo-with-bears.jpg"
+    photo.filename = "photo-with-bears.jpg";
     photo.isPublished = true;
 
     // create photo metadata object
@@ -1158,7 +1152,7 @@ After you run the application, the ORM will create a **album_photos_photo_albums
 Don't forget to register the `Album` class with your connection in the ORM:
 
 ```typescript
-const options: CreateConnectionOptions = {
+const options: ConnectionOptions = {
     // ... other options
     entities: [Photo, PhotoMetadata, Author, Album]
 };
@@ -1186,11 +1180,11 @@ photo.filename = "photo-with-bears.jpg";
 photo.albums = [album1, album2];
 await connection.manager.save(photo);
 
-// now out photo is saved and albums are attached to it
+// now our photo is saved and albums are attached to it
 // now lets load them:
 const loadedPhoto = await connection
     .getRepository(Photo)
-    .findOneById(1, { relations: ["albums"] });
+    .findOne(1, { relations: ["albums"] });
 ```
 
 `loadedPhoto` will be equal to:
@@ -1251,14 +1245,18 @@ There are a few repositories which you can clone and start with:
 * [Example how to use TypeORM with TypeScript and SystemJS in Browser](https://github.com/typeorm/browser-example)
 * [Example how to use Express and TypeORM](https://github.com/typeorm/typescript-express-example)
 * [Example how to use Koa and TypeORM](https://github.com/typeorm/typescript-koa-example)
-* [Example how to use TypeORM with MongoDB](https://github.com/typeorm/typeorm-typescript-mongo-example)
+* [Example how to use TypeORM with MongoDB](https://github.com/typeorm/mongo-typescript-example)
 * [Example how to use TypeORM in a Cordova/PhoneGap app](https://github.com/typeorm/cordova-example)
 * [Example how to use TypeORM with an Ionic app](https://github.com/typeorm/ionic-example)
+* [Example how to use TypeORM with React Native](https://github.com/typeorm/react-native-example)
+* [Example how to use TypeORM with Electron using JavaScript](https://github.com/typeorm/electron-javascript-example)
+* [Example how to use TypeORM with Electron using TypeScript](https://github.com/typeorm/electron-typescript-example)
 
 ## Extensions
 
 There are several extensions that simplify working with TypeORM and integrating it with other modules:
 
+* [TypeORM + GraphQL framework](http://vesper-framework.com)
 * [TypeORM integration](https://github.com/typeorm/typeorm-typedi-extensions) with [TypeDI](https://github.com/pleerock/typedi)
 * [TypeORM integration](https://github.com/typeorm/typeorm-routing-controllers-extensions) with [routing-controllers](https://github.com/pleerock/routing-controllers)
 * Models generation from existing database - [typeorm-model-generator](https://github.com/Kononnable/typeorm-model-generator)

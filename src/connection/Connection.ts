@@ -9,7 +9,7 @@ import {TreeRepository} from "../repository/TreeRepository";
 import {NamingStrategyInterface} from "../naming-strategy/NamingStrategyInterface";
 import {EntityMetadata} from "../metadata/EntityMetadata";
 import {Logger} from "../logger/Logger";
-import {EntityMetadataNotFound} from "../error/EntityMetadataNotFound";
+import {EntityMetadataNotFoundError} from "../error/EntityMetadataNotFoundError";
 import {MigrationInterface} from "../migration/MigrationInterface";
 import {MigrationExecutor} from "../migration/MigrationExecutor";
 import {MongoRepository} from "../repository/MongoRepository";
@@ -26,10 +26,13 @@ import {SelectQueryBuilder} from "../query-builder/SelectQueryBuilder";
 import {LoggerFactory} from "../logger/LoggerFactory";
 import {QueryResultCacheFactory} from "../cache/QueryResultCacheFactory";
 import {QueryResultCache} from "../cache/QueryResultCache";
+import {SqljsEntityManager} from "../entity-manager/SqljsEntityManager";
+import {RelationLoader} from "../query-builder/RelationLoader";
+import {RelationIdLoader} from "../query-builder/RelationIdLoader";
+import {EntitySchema} from "../";
 import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
 import {MysqlDriver} from "../driver/mysql/MysqlDriver";
-import {PromiseUtils} from "../util/PromiseUtils";
-import {SqljsEntityManager} from "../entity-manager/SqljsEntityManager";
+import {PromiseUtils} from "../";
 import {isArray} from "util";
 
 /**
@@ -97,6 +100,16 @@ export class Connection {
      */
     readonly queryResultCache?: QueryResultCache;
 
+    /**
+     * Used to load relations and work with lazy relations.
+     */
+    readonly relationLoader: RelationLoader;
+
+    /**
+     * Used to load relation ids of specific entity relations.
+     */
+    readonly relationIdLoader: RelationIdLoader;
+
     // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------
@@ -109,6 +122,8 @@ export class Connection {
         this.manager = this.createEntityManager();
         this.namingStrategy = options.namingStrategy || new DefaultNamingStrategy();
         this.queryResultCache = options.cache ? new QueryResultCacheFactory(this).create() : undefined;
+        this.relationLoader = new RelationLoader(this);
+        this.relationIdLoader = new RelationIdLoader(this);
     }
 
     // -------------------------------------------------------------------------
@@ -247,22 +262,18 @@ export class Connection {
      * Be careful with this method on production since this method will erase all your database tables and their data.
      * Can be used only after connection to the database is established.
      */
+    // TODO rename
     async dropDatabase(): Promise<void> {
         const queryRunner = await this.createQueryRunner("master");
-        const schemas = this.entityMetadatas
-            .filter(metadata => metadata.schema)
-            .map(metadata => metadata.schema!);
-
         if (this.driver instanceof SqlServerDriver || this.driver instanceof MysqlDriver) {
             const databases: string[] = this.driver.database ? [this.driver.database] : [];
             this.entityMetadatas.forEach(metadata => {
                 if (metadata.database && databases.indexOf(metadata.database) === -1)
                     databases.push(metadata.database);
             });
-
-            await PromiseUtils.runInSequence(databases, database => queryRunner.clearDatabase(schemas, database));
+            await PromiseUtils.runInSequence(databases, database => queryRunner.clearDatabase(database));
         } else {
-            await queryRunner.clearDatabase(schemas);
+            await queryRunner.clearDatabase();
         }
         await queryRunner.release();
     }
@@ -271,12 +282,14 @@ export class Connection {
      * Runs all pending migrations.
      * Can be used only after connection to the database is established.
      */
-    async runMigrations(): Promise<void> {
-
+    async runMigrations(options?: { transaction?: boolean }): Promise<void> {
         if (!this.isConnected)
             throw new CannotExecuteNotConnectedError(this.name);
 
         const migrationExecutor = new MigrationExecutor(this);
+        if (options && options.transaction === false) {
+            migrationExecutor.transaction = false;
+        }
         await migrationExecutor.executePendingMigrations();
     }
 
@@ -284,29 +297,32 @@ export class Connection {
      * Reverts last executed migration.
      * Can be used only after connection to the database is established.
      */
-    async undoLastMigration(): Promise<void> {
+    async undoLastMigration(options?: { transaction?: boolean }): Promise<void> {
 
         if (!this.isConnected)
             throw new CannotExecuteNotConnectedError(this.name);
 
         const migrationExecutor = new MigrationExecutor(this);
+        if (options && options.transaction === false) {
+            migrationExecutor.transaction = false;
+        }
         await migrationExecutor.undoLastMigration();
     }
 
     /**
      * Checks if entity metadata exist for the given entity class, target name or table name.
      */
-    hasMetadata(target: Function|string): boolean {
+    hasMetadata(target: Function|EntitySchema<any>|string): boolean {
         return !!this.findMetadata(target);
     }
 
     /**
      * Gets entity metadata for the given entity class or schema name.
      */
-    getMetadata(target: Function|string): EntityMetadata {
+    getMetadata(target: Function|EntitySchema<any>|string): EntityMetadata {
         const metadata = this.findMetadata(target);
         if (!metadata)
-            throw new EntityMetadataNotFound(target);
+            throw new EntityMetadataNotFoundError(target);
 
         return metadata;
     }
@@ -314,15 +330,15 @@ export class Connection {
     /**
      * Gets repository for the given entity.
      */
-    getRepository<Entity>(target: ObjectType<Entity>|string): Repository<Entity> {
+    getRepository<Entity>(target: ObjectType<Entity>|EntitySchema<Entity>|string): Repository<Entity> {
         return this.manager.getRepository(target);
     }
 
     /**
      * Gets tree repository for the given entity class or name.
-     * Only tree-type entities can have a TreeRepository, like ones decorated with @ClosureEntity decorator.
+     * Only tree-type entities can have a TreeRepository, like ones decorated with @Tree decorator.
      */
-    getTreeRepository<Entity>(target: ObjectType<Entity>|string): TreeRepository<Entity> {
+    getTreeRepository<Entity>(target: ObjectType<Entity>|EntitySchema<Entity>|string): TreeRepository<Entity> {
         return this.manager.getTreeRepository(target);
     }
 
@@ -330,7 +346,7 @@ export class Connection {
      * Gets mongodb-specific repository for the given entity class or name.
      * Works only if connection is mongodb-specific.
      */
-    getMongoRepository<Entity>(target: ObjectType<Entity>|string): MongoRepository<Entity> {
+    getMongoRepository<Entity>(target: ObjectType<Entity>|EntitySchema<Entity>|string): MongoRepository<Entity> {
         if (!(this.driver instanceof MongoDriver))
             throw new Error(`You can use getMongoRepository only for MongoDB connections.`);
 
@@ -348,7 +364,7 @@ export class Connection {
      * Wraps given function execution (and all operations made there) into a transaction.
      * All database operations must be executed using provided entity manager.
      */
-    async transaction(runInTransaction: (entityManger: EntityManager) => Promise<any>): Promise<any> {
+    async transaction(runInTransaction: (entityManager: EntityManager) => Promise<any>): Promise<any> {
         return this.manager.transaction(runInTransaction);
     }
 
@@ -376,7 +392,7 @@ export class Connection {
     /**
      * Creates a new query builder that can be used to build a sql query.
      */
-    createQueryBuilder<Entity>(entityClass: ObjectType<Entity>|Function|string, alias: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity>;
+    createQueryBuilder<Entity>(entityClass: ObjectType<Entity>|EntitySchema<Entity>|Function|string, alias: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity>;
 
     /**
      * Creates a new query builder that can be used to build a sql query.
@@ -386,12 +402,12 @@ export class Connection {
     /**
      * Creates a new query builder that can be used to build a sql query.
      */
-    createQueryBuilder<Entity>(entityOrRunner?: ObjectType<Entity>|Function|string|QueryRunner, alias?: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity> {
+    createQueryBuilder<Entity>(entityOrRunner?: ObjectType<Entity>|EntitySchema<Entity>|Function|string|QueryRunner, alias?: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity> {
         if (this instanceof MongoEntityManager)
             throw new Error(`Query Builder is not supported by MongoDB.`);
 
         if (alias) {
-            const metadata = this.getMetadata(entityOrRunner as Function|string);
+            const metadata = this.getMetadata(entityOrRunner as Function|EntitySchema<Entity>|string);
             return new SelectQueryBuilder(this, queryRunner)
                 .select(alias)
                 .from(metadata.target, alias);
@@ -446,10 +462,13 @@ export class Connection {
     /**
      * Finds exist entity metadata by the given entity class, target name or table name.
      */
-    protected findMetadata(target: Function|string): EntityMetadata|undefined {
+    protected findMetadata(target: Function|EntitySchema<any>|string): EntityMetadata|undefined {
         return this.entityMetadatas.find(metadata => {
             if (metadata.target === target)
                 return true;
+            if (target instanceof EntitySchema) {
+                return metadata.name === target.options.name;
+            }
             if (typeof target === "string") {
                 if (target.indexOf(".") !== -1) {
                     return metadata.tablePath === target;
@@ -475,7 +494,7 @@ export class Connection {
         Object.assign(this, { subscribers: subscribers });
 
         // build entity metadatas
-        const entityMetadatas = connectionMetadataBuilder.buildEntityMetadatas(this.options.entities || [], this.options.entitySchemas || []);
+        const entityMetadatas = connectionMetadataBuilder.buildEntityMetadatas(this.options.entities || []);
         Object.assign(this, { entityMetadatas: entityMetadatas });
 
         // create migration instances

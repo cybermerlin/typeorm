@@ -1,10 +1,7 @@
-import {ColumnOptions} from "../options/ColumnOptions";
-import {getMetadataArgsStorage} from "../../index";
+import {ColumnOptions, getMetadataArgsStorage} from "../../";
 import {
-    ColumnType,
-    SimpleColumnType,
-    WithLengthColumnType,
-    WithPrecisionColumnType
+    ColumnType, SimpleColumnType, WithLengthColumnType,
+    WithPrecisionColumnType, WithWidthColumnType
 } from "../../driver/types/ColumnTypes";
 import {ColumnMetadataArgs} from "../../metadata-args/ColumnMetadataArgs";
 import {ColumnCommonOptions} from "../options/ColumnCommonOptions";
@@ -13,6 +10,9 @@ import {ColumnNumericOptions} from "../options/ColumnNumericOptions";
 import {ColumnEnumOptions} from "../options/ColumnEnumOptions";
 import {ColumnEmbeddedOptions} from "../options/ColumnEmbeddedOptions";
 import {EmbeddedMetadataArgs} from "../../metadata-args/EmbeddedMetadataArgs";
+import {ColumnTypeUndefinedError} from "../../error/ColumnTypeUndefinedError";
+import {ColumnHstoreOptions} from "../options/ColumnHstoreOptions";
+import {ColumnWithWidthOptions} from "../options/ColumnWithWidthOptions";
 
 /**
  * Column decorator is used to mark a specific class property as a table column. Only properties decorated with this
@@ -42,6 +42,12 @@ export function Column(type: WithLengthColumnType, options?: ColumnCommonOptions
  * Column decorator is used to mark a specific class property as a table column.
  * Only properties decorated with this decorator will be persisted to the database when entity be saved.
  */
+export function Column(type: WithWidthColumnType, options?: ColumnCommonOptions & ColumnWithWidthOptions): Function;
+
+/**
+ * Column decorator is used to mark a specific class property as a table column.
+ * Only properties decorated with this decorator will be persisted to the database when entity be saved.
+ */
 export function Column(type: WithPrecisionColumnType, options?: ColumnCommonOptions & ColumnNumericOptions): Function;
 
 /**
@@ -53,71 +59,86 @@ export function Column(type: "enum", options?: ColumnCommonOptions & ColumnEnumO
 /**
  * Column decorator is used to mark a specific class property as a table column.
  * Only properties decorated with this decorator will be persisted to the database when entity be saved.
+ */
+export function Column(type: "hstore", options?: ColumnCommonOptions & ColumnHstoreOptions): Function;
+
+/**
+ * Column decorator is used to mark a specific class property as a table column.
+ * Only properties decorated with this decorator will be persisted to the database when entity be saved.
  *
  * Property in entity can be marked as Embedded, and on persist all columns from the embedded are mapped to the
  * single table of the entity where Embedded is used. And on hydration all columns which supposed to be in the
  * embedded will be mapped to it from the single table.
  */
-export function Column(type: (type?: any) => Function, options?: ColumnEmbeddedOptions): Function;
-
+export function Column(type: Function, options?: ColumnEmbeddedOptions): Function;
 /**
  * Column decorator is used to mark a specific class property as a table column.
  * Only properties decorated with this decorator will be persisted to the database when entity be saved.
  */
-export function Column(typeOrOptions?: ((type?: any) => Function) | ColumnType | (ColumnOptions & ColumnEmbeddedOptions),
+// double definition because in Column.d.ts this (last) definition with the body will be losted
+export function Column(typeOrOptions?: (ColumnType | (ColumnOptions & ColumnEmbeddedOptions)),
+                                      options?: (ColumnOptions & ColumnEmbeddedOptions)): Function;
+export function Column(typeOrOptions?: (ColumnType | (ColumnOptions & ColumnEmbeddedOptions)),
                        options?: (ColumnOptions & ColumnEmbeddedOptions)): Function {
-    let type: ColumnType | ((type?: any) => Function) | undefined;
-    if (typeof typeOrOptions === "string") {
-        type = <ColumnType> typeOrOptions;
+    return function (object: Object, propertyName: string) {
 
-    } else if (typeOrOptions instanceof Function && typeOrOptions.constructor) {
-        type = typeOrOptions;
+        // normalize parameters
+        let type: ColumnType | undefined;
+        if (typeof typeOrOptions === "string") {
+            type = <ColumnType> typeOrOptions;
 
-    } else if (typeOrOptions) {
-        typeOrOptions = typeOrOptions as (ColumnOptions & ColumnEmbeddedOptions);
-        options = <ColumnOptions> typeOrOptions;
-        type = typeOrOptions.type;
-    }
-    return function(object: Object, propertyName: string) {
+        } else if (typeOrOptions instanceof Function && typeOrOptions.constructor) {
+            type = typeOrOptions;
 
-        if (typeOrOptions instanceof Function) {
+        } else if (typeOrOptions) {
+            typeOrOptions = typeOrOptions as (ColumnOptions & ColumnEmbeddedOptions);
+            options = <ColumnOptions> typeOrOptions;
+            type = typeOrOptions.type;
+        }
+        if (!options) options = {} as ColumnOptions;
 
-            const reflectMetadataType = Reflect && (Reflect as any).getMetadata ? (Reflect as any).getMetadata("design:type", object, propertyName) : undefined;
-            const isArray = (reflectMetadataType === Array || (options && (options.isArray === true || options.array === true)));
+        // if type is not given explicitly then try to guess it
+        const reflectMetadataType = Reflect && (Reflect as any).getMetadata ? (Reflect as any).getMetadata("design:type", object, propertyName) : undefined;
+        const isArray = (reflectMetadataType === Array || (options && (options.isArray === true)));
+        
+        if (!type && reflectMetadataType) // if type is not given explicitly then try to guess it
+            type = reflectMetadataType;
 
-            const args: EmbeddedMetadataArgs = {
+        // check if there is no type in column options then set type from first function argument, or guessed one
+        if (!options.type && type)
+            options.type = type;
+
+        // specify HSTORE type if column is HSTORE
+        if (options.type === "hstore" && !options.hstoreType)
+            options.hstoreType = reflectMetadataType === Object ? "object" : "string";
+
+        if (typeOrOptions instanceof Function) { // register an embedded
+            getMetadataArgsStorage().embeddeds.push({
                 target: object.constructor,
                 propertyName: propertyName,
                 isArray: isArray,
-                prefix: options && options.prefix !== undefined ? options.prefix : undefined,
+                prefix: options.prefix !== undefined ? options.prefix : undefined,
                 type: typeOrOptions as (type?: any) => Function
-            };
-            getMetadataArgsStorage().embeddeds.push(args);
+            } as EmbeddedMetadataArgs);
 
-        } else {
-            // if type is not given implicitly then try to guess it
-            if (!type) {
-                const reflectMetadataType = Reflect && (Reflect as any).getMetadata ? (Reflect as any).getMetadata("design:type", object, propertyName) : undefined;
-                if (reflectMetadataType)
-                    type = reflectMetadataType; // todo: need to determine later on driver level
+        } else { // register a regular column
+
+            // if we still don't have a type then we need to give error to user that type is required
+            if (!options.type) {
+                if (type) options.type = type;
+                else throw new ColumnTypeUndefinedError(object, propertyName);
             }
 
-            // if column options are not given then create a new empty options
-            if (!options) options = {} as ColumnOptions;
+            // create unique
+            if (options.unique === true)
+                getMetadataArgsStorage().uniques.push({ target: object.constructor, columns: [propertyName] });
 
-            // check if there is no type in column options then set type from first function argument, or guessed one
-            if (!options.type && type)
-                options = Object.assign({type: type} as ColumnOptions, options);
-
-            // create and register a new column metadata
-            const args: ColumnMetadataArgs = {
+            getMetadataArgsStorage().columns.push({
                 target: object.constructor,
                 propertyName: propertyName,
                 mode: "regular",
                 options: options
-            };
-            getMetadataArgsStorage().columns.push(args);
+            } as ColumnMetadataArgs);
         }
-
     };
 }
