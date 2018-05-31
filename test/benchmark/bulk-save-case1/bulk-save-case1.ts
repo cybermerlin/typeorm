@@ -6,7 +6,7 @@ import {Post} from "./entity/Post";
 describe("benchmark > bulk-save > case1", () => {
     let connections: Connection[];
     before(function(done) {
-        createTestingConnections({ __dirname, enabledDrivers: ["postgres"] }).then(all => done(connections = all));
+        createTestingConnections({ __dirname, enabledDrivers: ["postgres"] }).then(all => (connections = all));
     });
     beforeEach(() => reloadTestingDatabases(connections));
     after(() => closeTestingConnections(connections));
