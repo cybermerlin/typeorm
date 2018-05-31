@@ -116,47 +116,6 @@ composite check constraint, on table level. E.g. `@Check("chk_name", "name <> 'a
 * `ancestor` and `descendant` columns in ClosureTable marked as primary keys
 * unique index now will be created for the join columns in `ManyToOne` and `OneToOne` relations
 
-    							neighbor_pos.deleted = 0
-    					) as unit_info on true
-    
-    					inner join lateral (
-    						select
-    							rex.id_rate_expense_category,
-    							rex.name as rex_name,
-    							coalesce(
-    								( finops.sum_with_vat_in_curs / array_length(finops.units_ids, 1) ) *
-    								( child_class.net_weight * child_pos.quantity / unit_info.total_net_weight ),
-    								0
-    							) as sum_in_curs_by_prop
-    
-    						from operation.fin_operation as finops
-    
-    						INNER JOIN operation.rate_expense_type as rex ON
-    							rex.id = finops.id_rate_expense_type
-    
-    						where
-    							finops.id_order = child_pos.id_list_orders and
-    							child_pos.id_unit = any( finops.units_ids ) and
-    							finops.deleted = 0 AND
-    							finops.is_valid = 1 and
-    							finops.id_fin_operation_type = 1
-    					) as finops on true
-    
-    				where
-    					list_order_positions.id_parent_part_order_position is not null and
-    					child_pos.id = list_order_positions.id
-    					or
-    					child_pos.id_parent_part_order_position = list_order_positions.id and
-    					child_pos.deleted = 0
-    
-    	) AS positions_group_sub_totals on true
-    ```
-* [ ] `createQueryBuilder().selectAndMap("COUNT(*)", "cntProperty")`
-* [ ] `@Select('...SQL...', { ...options })`
-* [ ] parallelizm & multithreading in code (for [].map|filter|reduce n other things)
-* [ ] use mocha-parallel for execution tests
-
-
 ## 0.1.19
 
 * fixed bug in InsertQueryBuilder
